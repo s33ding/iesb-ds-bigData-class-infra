@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metabase-athena-config
+  namespace: default
+data:
+  athena-connection.json: |
+    {
+      "engine": "athena",
+      "name": "IESB BigData Athena",
+      "details": {
+        "region": "us-east-1",
+        "workgroup": "primary",
+        "s3_staging_dir": "s3://iesb-bigdata/athena-results/",
+        "catalog": "AwsDataCatalog",
+        "schema": "iesb_bigdata_db",
+        "access_key": "",
+        "secret_key": "",
+        "use_iam_credentials": true
+      }
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: metabase-athena-secret
+  namespace: default
+type: Opaque
+data:
+  # AWS credentials will be provided via IAM roles for service accounts (IRSA)
+  # or instance profile - leave empty for IAM role authentication
+  access_key: ""
+  secret_key: ""
