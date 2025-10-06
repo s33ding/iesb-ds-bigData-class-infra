@@ -2,6 +2,115 @@
 
 This repository contains the infrastructure code for the IESB Big Data class, including Terraform configurations for AWS services and supporting scripts.
 
+## Architecture Overview
+
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    %% Student Access
+    Student[👨🎓 Student] --> TempCreds[🔑 Temporary Credentials]
+    TempCreds --> Console[🖥️ AWS Console Access]
+    
+    %% Data Source
+    Console --> RDS[(🗄️ Amazon RDS)]
+    RDS --> PI[📈 Performance Insights]
+    
+    %% Secrets Manager
+    SecretsManager[🔐 AWS Secrets Manager<br/>RDS Credentials]
+    
+    %% Glue Ecosystem
+    subgraph GlueEco["🔧 AWS Glue Ecosystem"]
+        GlueCatalog[📊 Data Catalog]
+        GlueNotebook[📓 Interactive Sessions]
+        subgraph SparkJupyter["⚡ Spark/Jupyter"]
+            GlueExamples[📝 Glue Examples/Spark Jobs]
+            JDBC[🔌 JDBC Connection]
+        end
+        Crawler1[🕷️ Crawler Bronze]
+        Crawler2[🕷️ Crawler Silver] 
+        Transform1[⚡ Spark ETL Bronze→Silver]
+    end
+    
+    %% S3 Data Lake
+    subgraph S3Lake["🗄️ S3 Data Lake"]
+        S3Bronze[🥉 Bronze Layer<br/>Raw Data]
+        S3Silver[🥈 Silver Layer<br/>Cleaned Data]
+        S3Gold[🥇 Gold Layer<br/>Analytics Ready]
+    end
+    
+    Console --> GlueEco
+    SecretsManager --> JDBC
+    JDBC --> RDS
+    
+    %% Data Flow
+    GlueExamples --> S3Bronze
+    S3Bronze --> Crawler1
+    Crawler1 --> GlueCatalog
+    Crawler1 --> Athena[🔍 Amazon Athena]
+    
+    Transform1 --> S3Silver
+    S3Silver --> Crawler2
+    Crawler2 --> GlueCatalog
+    
+    %% Analytics
+    Athena --> Views[👁️ Create Views]
+    Athena --> Queries[📊 SQL Queries]
+    
+    %% Styling
+    classDef student fill:#e1f5fe
+    classDef aws fill:#ff9800
+    classDef storage fill:#4caf50
+    classDef analytics fill:#9c27b0
+    classDef glue fill:#2196f3
+    
+    class Student,TempCreds,Console student
+    class RDS,PI,SecretsManager aws
+    class S3Lake,S3Bronze,S3Silver,S3Gold storage
+    class Athena,Views,Queries analytics
+    class GlueEco,GlueCatalog,GlueNotebook,SparkJupyter,GlueExamples,JDBC,Crawler1,Crawler2,Transform1 glue
+```
+
+### Simple Data Flow
+
+```
+👨🎓 Student Login (Temp Creds) 
+    ↓
+🖥️ AWS Console Access
+    ↓
+┌─────────────────────────────────┐
+│     🔧 AWS Glue Ecosystem       │
+│  📓 Interactive Sessions        │
+│  ┌─────────────────────────────┐ │
+│  │   ⚡ Spark/Jupyter          │ │
+│  │ 📝 Spark Jobs/Examples      │ │
+│  │ 🔌 JDBC Connection          │ │
+│  └─────────────────────────────┘ │
+│  🕷️ Crawlers (Bronze/Silver)    │
+│  📊 Data Catalog               │
+│  ⚡ Spark ETL Transformations   │
+└─────────────────────────────────┘
+    ↓
+🔐 Secrets Manager (RDS Creds) → 🗄️ RDS → 📈 Performance Insights
+    ↓
+┌─────────────────────────────────┐
+│        🗄️ S3 Data Lake          │
+│  🥉 Bronze Layer (Raw Data)     │
+│  🥈 Silver Layer (Clean Data)   │
+│  🥇 Gold Layer (Analytics Ready)│
+└─────────────────────────────────┘
+    ↓ 
+🔍 Athena Queries & Views
+```
+
+### Data Lake Layers
+
+| Layer | Purpose | Format | Use Case |
+|-------|---------|--------|----------|
+| 🥉 Bronze | Raw data storage | Original format | Archive, reprocess |
+| 🥈 Silver | Cleaned & validated | Parquet/Delta | Data science, reports |
+| 🥇 Gold | Business ready | Optimized schema | BI, ML, analytics |
+
 ## Project Structure
 
 ```
