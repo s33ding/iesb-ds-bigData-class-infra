@@ -1,0 +1,13 @@
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Student Configuration
+student_count = 18
+
+# S3 Bucket Names
+class_bucket_name = "iesb-bigdata"
+airflow_bucket_name = "dataiesb-airflow"
+glue_assets_bucket_prefix = "aws-glue-assets-"
+
+# Secrets Manager (SENSITIVE)
+rds_read_only_secret_name = "rds-read-only"

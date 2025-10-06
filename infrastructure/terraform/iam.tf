@@ -10,7 +10,7 @@ resource "aws_iam_user_group_membership" "teacher" {
 
 resource "aws_iam_user_login_profile" "teacher" {
   user                    = aws_iam_user.teacher.name
-  password_reset_required = true
+  password_reset_required = false
 }
 
 resource "aws_iam_group" "students" {
@@ -32,7 +32,7 @@ resource "aws_iam_user_group_membership" "students" {
 resource "aws_iam_user_login_profile" "students" {
   count   = var.student_count
   user    = aws_iam_user.students[count.index].name
-  password_reset_required = true
+  password_reset_required = false
 }
 
 resource "aws_iam_group_policy" "glue_access" {
@@ -92,6 +92,27 @@ resource "aws_iam_group_policy" "glue_access" {
       {
         Effect = "Allow"
         Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.aws_region}:*:secret:${var.rds_read_only_secret_name}*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeAvailabilityZones"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "airflow:*"
         ]
         Resource = "*"
@@ -121,7 +142,15 @@ resource "aws_iam_group_policy" "glue_access" {
         Effect = "Allow"
         Action = [
           "cloudwatch:ListMetrics",
-          "cloudwatch:GetMetricStatistics"
+          "cloudwatch:GetMetricStatistics",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListDashboards",
+          "cloudwatch:GetDashboard",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
         ]
         Resource = "*"
       }

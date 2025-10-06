@@ -1,40 +1,72 @@
-### IESB Big Data Class – Infrastructure (Terraform)
+# IESB Big Data Infrastructure
 
-Provision IAM users, credentials storage, S3, Glue access, and a Glue job that extracts from RDS using Secrets Manager and writes to S3.
+This repository contains the infrastructure code for the IESB Big Data class, including Terraform configurations for AWS services and supporting scripts.
 
-What this creates
+## Project Structure
 
-IAM
+```
+├── docs/                    # Documentation
+├── infrastructure/          # Infrastructure as Code
+│   ├── terraform/          # Terraform configurations
+│   └── scripts/            # Infrastructure management scripts
+├── examples/               # Code examples and tutorials
+│   ├── glue/              # AWS Glue examples
+│   └── notebooks/         # Jupyter notebooks
+├── testing/               # Test suites
+│   ├── unit/              # Unit tests
+│   └── integration/       # Integration tests
+└── deployment/            # Deployment configurations
+    ├── airflow/           # Apache Airflow setup
+    └── metabase/          # Metabase deployment
+```
 
-18 student users created dynamically and added to a new IAM Group.
+## What This Infrastructure Creates
 
-Console access with temporary passwords (force reset on first login).
+### IAM
+- 18 student users created dynamically and added to a new IAM Group
+- Console access with temporary passwords (force reset on first login)
+- Programmatic access (optional) via access keys
+- Group policies granting full access to the Glue ecosystem and class S3 bucket
 
-Programmatic access (optional) via access keys.
+### DynamoDB
+- Table to store initial login materials (username, temp console password, optional access keys)
+- SSE-KMS encrypted, with least-privilege write access from Terraform only
 
-Group policies granting full access to the Glue ecosystem and full access to a class S3 bucket.
+### S3
+- One class bucket (e.g., iesb-bigdata-<suffix>) that the student group can fully access
 
-DynamoDB
+### Glue
+- Glue job (Spark) that reads from Amazon RDS using Secrets Manager secret (rds-secret)
+- Writes output to the S3 bucket
+- Glue service role with access to the secret, class bucket, CloudWatch logs, and Glue resources
 
-A new table to store initial login materials (username, temp console password, optional access keys).
+## Prerequisites
 
-SSE-KMS encrypted, with least-privilege write access from Terraform only.
+- AWS CLI configured
+- Terraform installed
+- Python 3.x with required packages (see requirements.txt)
 
-S3
+## Quick Start
 
-One class bucket (e.g., iesb-bigdata-<suffix>) that the student group can fully access.
+1. Configure your AWS credentials
+2. Update `infrastructure/terraform/terraform.tfvars` with your specific values
+3. Run `terraform init` and `terraform apply` in the `infrastructure/terraform/` directory
+4. Use scripts in `infrastructure/scripts/` directory for user management
 
-Glue
+## Testing
 
-A Glue job (Spark) that reads from Amazon RDS using an existing Secrets Manager secret (rds-secret), and writes output to the S3 bucket.
+- Unit tests: `cd testing/unit && python run_tests.py`
+- Integration tests: Run tests from `testing/integration/` directory
 
-A Glue service role with access to the secret, the class bucket, CloudWatch logs, and Glue resources.
+## Documentation
 
-⚠️ Security note: Storing plaintext temp passwords in DynamoDB is inherently sensitive. This setup:
+See `docs/` directory for detailed documentation and guides.
 
-Forces password reset at first login.
+## Security Note
 
-Encrypts the table with KMS.
+⚠️ Storing plaintext temp passwords in DynamoDB is inherently sensitive. This setup:
+- Forces password reset at first login
+- Encrypts the table with KMS
+- Limits who can read the table (by default, only admins)
 
-Limits who can read the table (by default, only admins).
 Prefer distributing credentials over secure channels and deleting rows after students log in.

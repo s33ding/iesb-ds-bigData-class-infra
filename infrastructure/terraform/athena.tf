@@ -10,6 +10,6 @@ resource "aws_athena_workgroup" "bigdata" {
 }
 
 resource "aws_athena_database" "bigdata" {
-  name   = "bigdata_db"
+  name   = "iesb"
   bucket = "iesb-bigdata"
 }

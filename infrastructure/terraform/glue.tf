@@ -26,8 +26,7 @@ resource "aws_iam_role_policy" "glue_service" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          "arn:aws:secretsmanager:${var.aws_region}:*:secret:rds-secret*",
-          "arn:aws:secretsmanager:${var.aws_region}:*:secret:rds-read-only*"
+          "arn:aws:secretsmanager:${var.aws_region}:*:secret:${var.rds_read_only_secret_name}*"
         ]
       },
       {
@@ -85,7 +84,7 @@ resource "aws_iam_role_policy" "glue_service" {
 
 
 data "aws_secretsmanager_secret" "rds_secret" {
-  name = "rds-secret"
+  name = var.rds_read_only_secret_name
 }
 
 data "aws_secretsmanager_secret_version" "rds_secret" {
@@ -96,7 +95,7 @@ resource "aws_glue_connection" "rds_connection" {
   name = "iesb-rds-connection"
   
   connection_properties = {
-    JDBC_CONNECTION_URL = "jdbc:postgresql://${jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["host"]}:5432/${jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["db_name"]}"
+    JDBC_CONNECTION_URL = "jdbc:postgresql://${jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["host"]}:5432/${jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["dbname"]}"
     USERNAME = jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["username"]
     PASSWORD = jsondecode(data.aws_secretsmanager_secret_version.rds_secret.secret_string)["password"]
   }
@@ -119,7 +118,7 @@ data "aws_availability_zones" "available" {
 
 # Glue Database
 resource "aws_glue_catalog_database" "iesb_database" {
-  name = "iesb_bigdata_db"
+  name = "iesb"
   description = "IESB BigData class database"
 }
 
@@ -130,19 +129,7 @@ resource "aws_glue_crawler" "s3_crawler" {
   role          = aws_iam_role.glue_service.arn
 
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/municipio/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/unidade_federacao/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/regiao/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/ed_enem_2024_resultados/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/censo_escolar_2024/"
   }
   
   s3_target {
@@ -150,23 +137,11 @@ resource "aws_glue_crawler" "s3_crawler" {
   }
   
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/educacao_basica/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/ed_enem_2024_resultados/"
   }
   
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/censo_escolar_2024/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/pib_municipios/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/sus_aih/"
-  }
-  
-  s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/sus_procedimento_ambulatorial/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/ed_enem_2024_resultados_amos_per/"
   }
   
   s3_target {
@@ -178,11 +153,11 @@ resource "aws_glue_crawler" "s3_crawler" {
   }
   
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/agregados_setores_censitarios/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/educacao_basica/"
   }
   
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/Censo_20222_Populacao_Idade_Sexo/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/municipio/"
   }
   
   s3_target {
@@ -194,7 +169,23 @@ resource "aws_glue_crawler" "s3_crawler" {
   }
   
   s3_target {
-    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/ed_enem_2024_resultados_amos_per/"
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/pib_municipios/"
+  }
+  
+  s3_target {
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/regiao/"
+  }
+  
+  s3_target {
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/sus_aih/"
+  }
+  
+  s3_target {
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/sus_procedimento_ambulatorial/"
+  }
+  
+  s3_target {
+    path = "s3://${aws_s3_bucket.class_bucket.bucket}/bronze/unidade_federacao/"
   }
 
   configuration = jsonencode({
@@ -344,3 +335,5 @@ resource "aws_security_group" "glue_connection" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+

@@ -32,3 +32,19 @@ resource "aws_dynamodb_table_item" "student_credentials" {
     }
   })
 }
+
+resource "aws_dynamodb_table_item" "teacher_credentials" {
+  table_name = aws_dynamodb_table.credentials.name
+  hash_key   = aws_dynamodb_table.credentials.hash_key
+
+  item = jsonencode({
+    username = {
+      S = aws_iam_user.teacher.name
+    }
+    temp_password = {
+      S = aws_iam_user_login_profile.teacher.password
+    }
+  })
+
+  depends_on = [aws_dynamodb_table.credentials]
+}
